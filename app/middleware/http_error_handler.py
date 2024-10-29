@@ -1,12 +1,13 @@
 import requests
 from typing import Dict, Type, Callable
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Request
+from fastapi.responses import JSONResponse
 from functools import wraps
 from app.middleware.exception import *
 from app.core.logger import ServiceLogger
 
 
-logger = ServiceLogger(__name__)
+logger = ServiceLogger()
 
 
 class HTTPErrorHandler:
@@ -48,6 +49,26 @@ class HTTPErrorHandler:
                     detail=cls.format_error(e)
                 ) from e
         return wrapper
+    
+    @classmethod
+    async def handle_http_exception(cls, request: Request, exc: Exception):
+        err_class = exc.__class__
+        logger.error(
+            f"Error: {exc}",
+            exc_info=exc,
+            extra={
+                "error_type": err_class.__name__,
+                "path": request.url.path
+            }
+        )
+        
+        status_code = cls.ERROR_MAPPINGS.get(err_class, status.HTTP_422_UNPROCESSABLE_ENTITY)
+        error_detail = cls.format_error(exc)
+        
+        return JSONResponse(
+            status_code=status_code,
+            content=error_detail
+        )
     
     @staticmethod
     def format_error(e: Exception) -> Dict:

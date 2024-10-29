@@ -42,6 +42,13 @@ class AsyncDatabase:
 
 # Dependency
 database = AsyncDatabase(settings.SQLALCHEMY_DATABASE_URI)
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    async with database.session() as session:
+async def get_session():  # Remove return type hint
+    session = database.async_session_maker()
+    try:
         yield session
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()

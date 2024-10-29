@@ -5,13 +5,13 @@ from app.core.settings import settings
 from sqlalchemy.sql import text
 from app.database.postgres import get_session
 from app.middleware.http_error_handler import HTTPErrorHandler
-from app.middleware.auth import Auth
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.logger import ServiceLogger
 
 
 app = FastAPI(
     title=settings.SERVER_NAME,
     openapi_url=f"/openapi.json",
-    dependencies=[Depends(Auth.verify_token)]
 )
 
 app.add_middleware(
@@ -26,12 +26,13 @@ app.include_router(api_router)
 
 @app.exception_handler(Exception)
 async def custom_exception_handler(request: Request, exc: Exception):
-    handler = HTTPErrorHandler.handle_exceptions(lambda: None)
-    return await handler(request, exc)
+    return await HTTPErrorHandler.handle_http_exception(request, exc)
 
 # Health check endpoint
 @app.get("/health")
-async def health_check():
-    db_connection = await get_session()
-    await db_connection.execute(text("SELECT 1"))
+async def health_check(
+    session: AsyncSession = Depends(get_session)
+):
+    ServiceLogger.info("Health check endpoint called")
+    await session.execute(text("SELECT 1"))
     return {"status": "ok"}
