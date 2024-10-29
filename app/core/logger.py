@@ -1,44 +1,89 @@
-from typing import Any, Dict, Optional
-from pydantic import AnyHttpUrl, validator
-from pydantic_settings import BaseSettings
+import logging
+import sys
+from typing import Any, Optional
+from pathlib import Path
+from logging.handlers import RotatingFileHandler
 
-class Settings(BaseSettings):
-    SERVER_NAME: str
-    SERVER_HOST: AnyHttpUrl
-    SERVER_PORT: int
-    DB_HOST: str
-    DB_USER: str
-    DB_PASSWORD: str
-    DB_PORT: str
-    DB_NAME: str
-    SQLALCHEMY_DATABASE_URI: Optional[str] = None
-    DB_ENGINE_POOL_SIZE: str
+class ServiceLogger:
+    """Simple logger for service-wide use"""
+    _instance: Optional[logging.Logger] = None
 
-    PUBLIC_AUTH_JWKS_URL: str
-    PUBLIC_AUTH_KID: str
+    @classmethod
+    def setup(cls, 
+              service_name: str = "service",
+              log_file: str = "logs/service.log",
+              level: str = "INFO") -> None:
+        """Singleton to setup logger once at application startup"""
+        if cls._instance is not None:
+            return
 
-    MAXIMUM_REQUEST_LENGTH: int
-    PCR_GENE_KITS: list[str]
-    AVAILABLE_CHIP_STATUS: list[str]
-    EXPORT_PLATE_STATUS: list[str]
+        # Create logger
+        logger = logging.getLogger(service_name)
+        logger.setLevel(level)
 
-    DNA_BOX_CAPACITY_MICROARRAY: int
-    DNA_BOX_CAPACITY_PCR: int
-    DNA_BOX_PREFIX_MICROARRAY: str
-    DNA_BOX_PREFIX_PCR: str
-    DNA_BOX_SCALE_MICROARRAY_MAX_ROWS: int
-    DNA_BOX_SCALE_PCR_MAX_ROWS: int
+        # Create formatter
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
 
-    @validator("SQLALCHEMY_DATABASE_URI", pre=True)
-    # Change to Oracle database
-    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
-        if isinstance(v, str):
-            return v
-        return f"postgresql+asyncpg://{values.get('DB_USER')}:{values.get('DB_PASSWORD')}@{values.get('DB_HOST')}:{values.get('DB_PORT')}/{values.get('DB_NAME')}"
+        # Console handler
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
 
-    class Config:
-        case_sensitive = True
-        env_file = '.env'
-        env_file_encoding = 'utf-8'
+        # File handler
+        try:
+            # Create logs directory if it doesn't exist
+            log_path = Path(log_file)
+            log_path.parent.mkdir(exist_ok=True)
 
-settings = Settings(_env_file='.env')
+            # Setup file handler with rotation
+            file_handler = RotatingFileHandler(
+                filename=log_file,
+                maxBytes=10 * 1024 * 1024,  # 10MB
+                backupCount=5,
+                encoding='utf-8'
+            )
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+        except Exception as e:
+            logger.error(f"Failed to setup file logging: {e}")
+
+        cls._instance = logger
+
+    @classmethod
+    def get_logger(cls) -> logging.Logger:
+        """Get the configured logger instance"""
+        if cls._instance is None:
+            cls.setup()
+        return cls._instance
+    
+    @classmethod
+    def debug(cls, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log debug message"""
+        cls.get_logger().debug(msg, *args, **kwargs)
+
+    @classmethod
+    def info(cls, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log info message"""
+        cls.get_logger().info(msg, *args, **kwargs)
+
+    @classmethod
+    def warning(cls, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log warning message"""
+        cls.get_logger().warning(msg, *args, **kwargs)
+
+    @classmethod
+    def error(cls, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log error message"""
+        cls.get_logger().error(msg, *args, **kwargs)
+
+    @classmethod
+    def critical(cls, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log critical message"""
+        cls.get_logger().critical(msg, *args, **kwargs)
+
+    @classmethod
+    def exception(cls, msg: str, *args: Any, **kwargs: Any) -> None:
+        """Log exception message"""
+        cls.get_logger().exception(msg, *args, **kwargs)

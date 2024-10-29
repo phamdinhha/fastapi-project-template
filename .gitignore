@@ -1,0 +1,5 @@
+data/*
+./app/static/*
+./app/templates/*
+__pycache__/*
+*.pyc
