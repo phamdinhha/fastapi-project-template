@@ -1,15 +1,17 @@
-from fastapi import FastAPI
-from fastapi.routing import APIRoute
+from fastapi import FastAPI, Request, Depends
 from starlette.middleware.cors import CORSMiddleware
 from app.api.main import api_router
 from app.core.settings import settings
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
 from app.database.postgres import get_session
+from app.middleware.http_error_handler import HTTPErrorHandler
+from app.middleware.auth import Auth
+
 
 app = FastAPI(
     title=settings.SERVER_NAME,
     openapi_url=f"/openapi.json",
+    dependencies=[Depends(Auth.verify_token)]
 )
 
 app.add_middleware(
@@ -21,6 +23,11 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+@app.exception_handler(Exception)
+async def custom_exception_handler(request: Request, exc: Exception):
+    handler = HTTPErrorHandler.handle_exceptions(lambda: None)
+    return await handler(request, exc)
 
 # Health check endpoint
 @app.get("/health")
