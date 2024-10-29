@@ -1,6 +1,6 @@
 import pytest
-from app.api.http.products import ProductController
-from app.schemas.product import ProductCreationReq, ProductResp
+from app.api.http.products import create_product
+from app.schemas.products import ProductCreationReq, ProductResp
 
 @pytest.fixture
 def mock_service(monkeypatch):
@@ -19,10 +19,12 @@ def mock_service(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_create_product_controller(mock_service):
-    controller = ProductController()
-    product_data = ProductCreationReq(name="Test Product")
+    product_data = ProductCreationReq(name="Test Product", description="Test Description", price=100, config={"key": "value"})
     
-    result = await controller.create_product(product_data, session=None)
+    result = await create_product(product_data, session=None)
     
     assert result.id == 1
     assert result.name == "Test Product" 
+    assert result.description == "Test Description"
+    assert result.price == 100
+    assert result.config == {"key": "value"}

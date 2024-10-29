@@ -1,6 +1,6 @@
 import pytest
 from app.services.product import ProductService
-from app.schemas.product import ProductCreationReq
+from app.schemas.products import ProductCreationReq
 from app.models.products import Product
 
 @pytest.fixture
