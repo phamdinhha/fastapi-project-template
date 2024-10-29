@@ -11,4 +11,4 @@ class ProductCreationReq(ProductBase):
 
 class ProductResp(ProductBase):
     id: int
-    config: Optional[dict]
+    config: Optional[dict] = None

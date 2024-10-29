@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.product import ProductService
-from app.schemas.users import ProductCreationReq, ProductResp
+from app.schemas.products import ProductCreationReq, ProductResp
 from app.database.postgres import get_session
 
 

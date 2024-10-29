@@ -3,3 +3,4 @@ data/*
 ./app/templates/*
 __pycache__/*
 *.pyc
+logs/*

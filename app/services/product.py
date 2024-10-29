@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.base import BaseService
 from app.models.products import Product
 from app.repositories.product import ProductRepository
-from app.schemas.users import ProductCreationReq, ProductResp
+from app.schemas.products import ProductCreationReq, ProductResp
 
 class ProductService(BaseService[Product]):
     def __init__(self):
@@ -16,7 +16,7 @@ class ProductService(BaseService[Product]):
         product_data: ProductCreationReq
     ) -> ProductResp:
         product = await self.create(session, product_data)
-        return ProductResp.model_validate(product)
+        return ProductResp.model_validate(product.to_dict())
 
     async def get_product(
         self, 
