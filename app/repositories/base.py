@@ -2,9 +2,9 @@ from typing import TypeVar, Generic, Type, Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import update, delete
-from pydantic import BaseModel
+from sqlalchemy.orm import DeclarativeBase
 
-ModelType = TypeVar('ModelType', bound=BaseModel)
+ModelType = TypeVar('ModelType', bound=DeclarativeBase)
 
 
 class BaseRepo(Generic[ModelType]):
