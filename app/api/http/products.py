@@ -22,4 +22,4 @@ async def get_product(
     session: AsyncSession = Depends(get_session),
     service: ProductService = Depends(ProductService)
 ):
-    return await service.get_product(session, product_id) 
+    return await service.get_product(session, product_id)
