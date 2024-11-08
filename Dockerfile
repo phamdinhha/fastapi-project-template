@@ -27,5 +27,7 @@ RUN python3 -m ensurepip
 RUN pip3 install --upgrade pip==24.0.0
 RUN pip3 install --no-cache-dir -r requirements.txt
 
+COPY . /app/
+
 EXPOSE 8000
 CMD ["sh", "entrypoint.sh"]
